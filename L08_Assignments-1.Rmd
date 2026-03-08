@@ -1,0 +1,225 @@
+---
+title: Static plots - Assignments
+output: html_document
+---
+
+### References and datasets
+
+-   Original paper: Abbas et al. (2019) *Ecological Indicators* (<https://doi.org/10.1016/j.ecolind.2019.105524>)
+-   StatQuest: PCA and other videos (<https://statquest.org/>)
+-   Also check the lecture slides for L02-L07
+
+# 1. Student ID and Name
+
+## [Student ID]{style="color:red"}:21054779
+
+## [Name]{style="color:red"}: WING, Yui Yan
+
+# 2. Generative AI declaration
+
+Students may use generative AI tools during assignment, for example, to check and improve code, provided that the content is original and reflects the student's own contributions. If generative AI is used, students must declare its use in the box below. An example statement is: “*During the assignment, I used [XXXX] to [XXXX]. I subsequently reviewed and edited the code and take(s) full responsibility for the final version of the code.”*
+
+::: textbox
+During the assignment, I used AI to know more about the usage of function and improve my figure. 
+For example panel.background = element_rect(fill = "gray90"),   
+    panel.grid.major = element_line(color = "white"),  
+    panel.grid.minor = element_line(color = "white")   
+I subsequently reviewed and edited the code and take(s) full responsibility for the final version of the code
+:::
+
+# 3. Assignments
+
+## Github: Create a Github account
+
+-   Create your Github account.
+-   Install Git on your computer as well (the latest version = 2.53.0).
+-   Not mandatory, but please read the advice about usernames in the lecture.
+
+## Github: Create your first repository
+
+-   Repository name must be “DASC3240_Assignment1.”
+-   Make the visibility “public” so I can check it.
+-   The repository must have a README and a License file.
+-   Include a screenshot of your shell window showing the version of Git on your computer.
+
+## Tree community data in Hong Kong
+
+Go to Canvas and download `Abbas_2019_TableS4_ed1.csv` and `Abbas_2019_TableS4_ed2.csv`.
+
+-   `Abbas_2019_TableS4_ed1.csv` includes the plot information (metadata).
+-   `Abbas_2019_TableS4_ed2.csv` includes dominant tree species data in the 28 forest plots.
+
+1.  Calculate the total abundance of the dominant tree species in each forest plot, and visualize the relationship between the total abundance and forest age. You should use `AGE_MEDIAN` column in the `Abbas_2019_TableS4_ed1.csv` file as a forest age index.
+
+2.  Visualize the dominant tree species compositions using dimension reduction techniques. For visualization, you must use different colors for different forest age groups.
+
+    2-1. Perform PCA to visualize the tree species composition.\
+    2-2. Perform NMDS to visualize the tree species composition.\
+
+# 3. Marking criteria and important notes
+
+[**Please check the lecture PDF "L08_Assignment-I.pdf" provided on Canvas.**]{style="color:darkred"}
+
+# 4. Your answers
+
+### 1. Calculate the total abundance of the dominant tree species in each forest plot, and visualize the relationship between the total abundance and forest age.
+
+-   You should use `AGE_MEDIAN` column in the `Abbas_2019_TableS4_ed1.csv` file as a forest age index.
+-   You can calculate **the sum of each column** in `Abbas_2019_TableS4_ed2.csv` to calculate the total abundance of the dominant tree species in each plot.
+-   You will combine the data from two dataframes, so please check if the column names of `Abbas_2019_TableS4_ed2.csv` and the row names (indices) of `Abbas_2019_TableS4_ed1.csv` match (by using R script, not by visual inspection!).
+-   To visualize the relationship, barplot is **NOT** recommended.
+
+```{r}
+
+library(tidyverse); packageVersion("tidyverse")
+
+d1 <- read.csv("C:/Users/HP/Downloads/Abbas_2019_TableS4_ed1.csv", row.names = 1)
+d2 <- read.csv("C:/Users/HP/Downloads/Abbas_2019_TableS4_ed2.csv", row.names = 1)
+
+# Check if there are any common names
+common <- intersect(colnames(d2), rownames(d1))
+if (length(common) == 0) {
+  stop("No common names between d2 columns and d1 rows. Cannot merge.")
+} else {
+  message("Found ", length(common), " common name(s).")
+}
+common
+dim(d1)
+dim(d2)
+
+if (length(common) == nrow(d1) && length(common) == ncol(d2)) {
+  message("The column names of `Abbas_2019_TableS4_ed2.csv` and the row names (indices) of `Abbas_2019_TableS4_ed1.csv` match.")
+}
+
+```
+
+
+```{r}
+age_median <- d1$AGE_MEDIAN # Extract the median age column from d1
+sum_column <- colSums(d2) # Calculate column sums of d2
+
+new <- data.frame(abundance=sum_column,age=age_median)
+
+new$age <- factor(new$age, levels = c(7,20,39,61,70))
+
+ggplot(new, aes(x = age, y = abundance)) +
+  geom_boxplot(width = 0.4,outlier.shape = NA)+
+  geom_jitter(width = 0.2, size = 2)  +
+
+  
+  labs(title = "Total Abundance by Forest Age",x = "Median forest age (yr)", y = "Total tree abundance(ind.)")+
+   theme(plot.title = element_text(hjust = 0.5))  
+
+```
+
+### 2. Visualize the dominant tree species compositions using PCA and NMDS.
+
+There are a number of points you should consider:
+
+-   For visualization, you must use different colors for different forest age groups. Use of different marker styles for different groups is also a good idea.
+-   [**Set random seeds if your analysis includes random process(es)**]{style="color:darkred"}.
+-   Before applying dimension reduction functions (e.g., `prcomp()`), please make sure that [**rows represent samples (= forest plots) and columns represent tree species**]{style="color:darkred"}. You have to transpose the data frame (In `Abbas_2019_TableS4_ed2.csv`, columns represent samples and rows represent tree species).
+-   Usually we should consider whether we must perform the data preprocessing before applying dimension reduction techniques (e.g., standardization). [**In this assignment, please convert your data into compositional data using the following code**]{style="color:darkred"} `d_tree_rel <- apply(d_tree, 2, function(x) x/sum(x))` (`d_tree` represents the name of your data.frame. You should change it depending on your R object name). This means that, in this assignment, we are interested in tree community compositions, not abundances.
+
+#### 2-1. Perform PCA to visualize the tree species composition.
+
+After PCA, please visualize the result.
+
+```{r}
+library(ggsci)
+d_tree <- as.data.frame(t(d2))# Transpose the original data frame so that rows represent samples and columns represent tree species
+
+
+d_rel <- apply(d_tree, 1, function(x) x / sum(x)) %>% t() %>% as.data.frame() #Convert raw counts to relative abundances
+
+
+age <- d1$AGE_MEDIAN #Extract median age values from d1 
+age_factor <- factor(age) #Convert to factor
+d_rel$Age <- age_factor #Add the age factor as a new column to the relative abundance data frame.
+
+species_data <- d_rel[, 1:(ncol(d_rel) - 1)]   # Separate the species data for PCA.
+pca_result <- prcomp(species_data,center = FALSE, scale = FALSE)
+
+
+pca_vars <- pca_result$sdev^2 # Calculate variance explained by each principal component.
+prop_vars <- pca_vars / sum(pca_vars)
+
+# Extract the proportion of variance for PC1 and PC2
+pc1_var <- round(prop_vars[1] * 100, 1)
+pc2_var <- round(prop_vars[2] * 100, 1)
+
+# Extract the PCA scores and add the age factor.
+pca_scores <- as.data.frame(pca_result$x)
+pca_scores$Age <- d_rel$Age
+
+# Visualize the result using ggplots
+pca_plot <- ggplot(pca_scores, aes(x = PC1, y = PC2, color = Age, shape = Age)) +
+  geom_point(size = 2) +
+  labs(
+    title = "PCA analysis for tree species composition",
+    x = paste0("PC1 (", pc1_var, "%)"),
+    y = paste0("PC2 (", pc2_var, "%)"),
+    color = "Age median",   
+    shape = "Age median"   
+  ) +
+
+  # Assign shapes to each age category
+  scale_shape_manual(
+    values = c("7" = 16, "20" = 17, "39" = 15, 
+               "61" = 18, "70" = 8)
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+print(pca_plot)
+
+
+```
+
+
+
+
+
+#### 2-2. Perform NMDS to visualize the tree species composition.
+
+After NMDS, please visualize the result. You can use Bray-Curtis dissimilarity to calculate the dissimilarity among plots.
+
+```{r}
+library(vegan)
+
+# Set random seed
+set.seed(1234)
+
+# Do NMDS
+nmds_result <- metaMDS(species_data, # data
+                    distance = "bray", # Use Bray-Curtis dissimilarity
+                    k = 2) # The number of dimensions
+
+
+nmds_scores <- as.data.frame(nmds_result$points)  # Extract the NMDS site scores
+nmds_scores$Age <- d_rel$Age   # Add the Age grouping variable to the scores data frame
+
+# Visualize the result using ggplot
+nmds_plot <- ggplot(nmds_scores, aes(x = MDS1, y = MDS2, color = Age, shape = Age)) +
+  geom_point(size = 2) +
+  labs(
+    title = paste0("NMDS analysis"),
+    x = "NMDS1",
+    y = "NMDS2",
+    color = "Age median",     
+    shape = "Age median"
+  ) +
+  scale_shape_manual(
+    values = c("7" = 16, "20" = 17, "39" = 15, 
+               "61" = 18, "70" = 8)
+  ) +
+  theme_minimal() +
+    theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill = "gray90"),   # Set panel background to light gray
+    panel.grid.major = element_line(color = "white"),   # Major grid lines in white
+    panel.grid.minor = element_line(color = "white")   
+  )
+
+print(nmds_plot)
+```
