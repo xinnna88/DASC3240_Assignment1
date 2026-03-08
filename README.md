@@ -1,4 +1,4 @@
-# Assignments1 Static plots
+# Assignments 1 Static plots
 This repository contains my solutions for Assignment 1 of DASC3240, focusing on static data visualization using R.
 
 Main tasks:
