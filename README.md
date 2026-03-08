@@ -9,9 +9,9 @@ Main tasks:
 
 -Visualize dominant tree species composition using dimension reduction:
 
-Principal Component Analysis (PCA)
+1. Principal Component Analysis (PCA)
 
-Non-metric Multidimensional Scaling (NMDS) and use different colors to represent different forest age groups
+2. Non-metric Multidimensional Scaling (NMDS) and use different colors to represent different forest age groups
 
 
 References & Datasets
@@ -24,6 +24,6 @@ The accumulation of species and recovery of species composition along a 70 year 
 
 -Datasets :
 
-1.Abbas_2019_TableS4_ed1.csv — Plot metadata (including AGE_MEDIAN)
+1. Abbas_2019_TableS4_ed1.csv — Plot metadata (including AGE_MEDIAN)
 
-2.Abbas_2019_TableS4_ed2.csv — Dominant tree species abundance data
+2. Abbas_2019_TableS4_ed2.csv — Dominant tree species abundance data
